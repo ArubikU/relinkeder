@@ -1,0 +1,222 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    color-scheme: light only;
+    --primary: #f56a00;
+    --primary-dark: #d35400;
+    --primary-light: #ff8c3f;
+    --secondary: #0077b5;
+    --secondary-dark: #005e8b;
+    --secondary-light: #0a95ff;
+    --relinkeder-bg: #f3f2ef;
+    --relinkeder-card: #ffffff;
+    --relinkeder-border: #e0e0e0;
+    --relinkeder-text: #191919;
+    --relinkeder-text-light: #666666;
+    --success: #28a745;
+    --success-dark: #218838;
+    --success-light: #51d88a;
+    --warning: #ffc107;
+    --warning-dark: #e0a800;
+    --warning-light: #ffe082;
+    --error: #dc3545;
+    --error-dark: #b21f2d;
+    --error-light: #ff6f7c;
+    --info: #17a2b8;
+    --info-dark: #117a8b;
+    --info-light: #63d2ff;
+    --background: #f8f9fa;
+    --background-dark: #18191a;
+    --surface: #ffffff;
+    --surface-dark: #242526;
+    --border: #e0e0e0;
+    --border-dark: #3a3b3c;
+    --text: #191919;
+    --text-light: #666666;
+    --text-dark: #191919;
+    --muted: #6c757d;
+    --muted-light: #adb5bd;
+    --muted-dark: #343a40;
+    --accent: #6610f2;
+    --accent-dark: #520dc2;
+    --accent-light: #b197fc;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply rounded-none;
+  }
+
+}
+
+  .rounded-none {
+    border-radius: 0;
+  }
+
+  .rounded-sm {
+    border-radius: 0.125rem;
+  }
+
+  .rounded {
+    border-radius: 0.25rem;
+  }
+
+  .rounded-md {
+    border-radius: 0.375rem;
+  }
+
+  .rounded-lg {
+    border-radius: 0.5rem;
+  }
+
+  .rounded-xl {
+    border-radius: 0.75rem;
+  }
+
+  .rounded-2xl {
+    border-radius: 1rem;
+  }
+
+  .rounded-3xl {
+    border-radius: 1.5rem;
+  }
+
+  .rounded-full {
+    border-radius: 9999px;
+  }
+/* relinkeder-style components */
+.relinkeder-card {
+  @apply rounded-lg border border-[#e0e0e0] bg-white shadow-sm transition-all hover:shadow-md;
+}
+
+.relinkeder-button {
+  @apply rounded-full bg-primary px-4 py-2 font-medium text-white transition-colors hover:bg-primary-dark;
+}
+
+.relinkeder-input {
+  @apply rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary;
+}
+
+.relinkeder-feed-item {
+  @apply mb-3 rounded-lg border border-[#e0e0e0] bg-white p-4;
+}
+
+.relinkeder-avatar {
+  @apply h-12 w-12 rounded-full;
+}
+
+.relinkeder-divider {
+  @apply my-3 h-[1px] w-full bg-[#e0e0e0];
+}
+
+.relinkeder-reaction-button {
+  @apply flex items-center justify-center gap-2 rounded-md p-2 text-sm font-medium text-gray-600 hover:bg-gray-100;
+}
+
+.relinkeder-nav-item {
+  @apply flex flex-col items-center justify-center rounded-md p-2 text-xs font-medium text-gray-600 hover:text-primary;
+}
+
+.relinkeder-nav-item.active {
+  @apply text-primary;
+}
+
+/* Fondo oscuro detrás del modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+/* Contenedor del modal */
+.modal {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  z-index: 51; /* mayor que overlay */
+}
+.alerts {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alert {
+  margin: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.alert-info {
+  background-color: #3b82f6;
+}
+.alert-success {
+  background-color: #10b981;
+}
+.alert-error {
+  background-color: #ef4444;
+}
+.alert-warning {
+  background-color: #f59e0b;
+}
+
+.alert button {
+  background: transparent;
+  border: none;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.modal button {
+  margin: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* Botón principal (confirmar) */
+.modal button:first-of-type {
+  background-color: #3b82f6; /* azul */
+  color: white;
+}
+
+.modal button:first-of-type:hover {
+  background-color: #2563eb;
+}
+
+/* Botón secundario (cancelar) */
+.modal button:last-of-type {
+  background-color: #e5e7eb; /* gris claro */
+  color: #111827;
+}
+
+.modal button:last-of-type:hover {
+  background-color: #d1d5db;
+}
