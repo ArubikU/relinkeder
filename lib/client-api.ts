@@ -1,37 +1,5 @@
 // Client-side API functions
 
-// Auth
-export async function loginUser(email: string, password: string) {
-  const response = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-  })
-
-  return response.json()
-}
-
-export async function registerUser(name: string, email: string, password: string) {
-  const response = await fetch("/api/auth/register", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ name, email, password }),
-  })
-
-  return response.json()
-}
-
-export async function logoutUser() {
-  const response = await fetch("/api/auth/logout", {
-    method: "POST",
-  })
-
-  return response.json()
-}
 
 export async function getCurrentUser() {
   const response = await fetch("/api/auth/user")
@@ -45,13 +13,13 @@ export async function getCurrentUser() {
 }
 
 // Profile
-export async function saveUserProfile(name: string, career: string, interests: string, ideals: string,lang: string) {
+export async function saveUserProfile( career: string, interests: string, ideals: string,lang: string) {
   const response = await fetch("/api/profile", {
-    method: "PUT",
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ name, career, interests, ideals, lang }),
+    body: JSON.stringify({  career, interests, ideals, lang }),
   })
 
   return response.json()

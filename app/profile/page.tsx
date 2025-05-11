@@ -69,7 +69,6 @@ export default function ProfilePage() {
 
     try {
       const formData = new FormData(e.target as HTMLFormElement)
-      const name = formData.get("name") as string
       const career = formData.get("career") as string
       const interests = formData.get("interests") as string
       const ideals = formData.get("ideals") as string
@@ -80,7 +79,7 @@ export default function ProfilePage() {
         lang = "en"
       }
 
-      const result = await saveUserProfile(name, career, interests, ideals, lang)
+      const result = await saveUserProfile( career, interests, ideals, lang)
 
       if (result.success) {
         setProfileSuccess(true)
@@ -163,17 +162,6 @@ export default function ProfilePage() {
             )}
 
             <form onSubmit={handleProfileSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  placeholder="John Doe"
-                  required
-                  className="relinkeder-input"
-                  defaultValue={user?.name || ""}
-                />
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>

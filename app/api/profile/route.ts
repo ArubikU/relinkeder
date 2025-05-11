@@ -1,74 +1,64 @@
-import { db } from "@/lib/db"
-import { cookies } from "next/headers"
+import { getUserData, saveUserProfile } from "@/lib/actions"
+import { auth } from "@clerk/nextjs/server"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
   try {
-    // Get session token from cookies
-    const sessionToken = (await cookies()).get("session_token")?.value
+    // Obtener la sesión de Clerk
+    const { userId } = await auth()
 
-    if (!sessionToken) {
-      return NextResponse.json({ success: false, message: "Not authenticated" }, { status: 401 })
+    if (!userId) {
+      return NextResponse.json({ success: false, message: "No autenticado" }, { status: 401 })
     }
 
-    // Get user from session
-    const sessions = await db.query("SELECT user_id FROM sessions WHERE session_token = $1", [sessionToken])
+    // Obtener datos del usuario usando la función del servidor
+    const userData = await getUserData(userId)
 
-    if (!sessions.length) {
-      return NextResponse.json({ success: false, message: "Invalid session" }, { status: 401 })
+    if (!userData) {
+      return NextResponse.json({ success: false, message: "Usuario no encontrado" }, { status: 404 })
     }
 
-    const userId = sessions[0].user_id
-
-    // Get user data
-    const users = await db.query("SELECT id, name, email, career, interests, ideals, lang FROM users WHERE id = $1", [userId])
-
-    if (!users.length) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
-    }
-    console.log(users[0])
-    console.log("AAA")
-    return NextResponse.json({ success: true, user: users[0] }, { status: 200 })
+    return NextResponse.json({ success: true, user: userData }, { status: 200 })
   } catch (error) {
     console.error("Error getting user profile:", error)
-    return NextResponse.json({ success: false, message: "Failed to get user profile" }, { status: 500 })
+    return NextResponse.json({ success: false, message: "Error al obtener perfil de usuario" }, { status: 500 })
   }
 }
 
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    // Get session token from cookies
-    const sessionToken = (await cookies()).get("session_token")?.value
-
-    if (!sessionToken) {
-      return NextResponse.json({ success: false, message: "Not authenticated" }, { status: 401 })
-    }
-
-    // Get user from session
-    const sessions = await db.query("SELECT user_id FROM sessions WHERE session_token = $1", [sessionToken])
-
-    if (!sessions.length) {
-      return NextResponse.json({ success: false, message: "Invalid session" }, { status: 401 })
-    }
-
-    const userId = sessions[0].user_id
-
-    // Get request body
-    const { name, career, interests, ideals, lang } = await request.json()
+    // Obtener la sesión de Clerk
+    const { userId } = await auth()
     
-    // Update user
-    await db.query("UPDATE users SET name = $1, career = $2, interests = $3, ideals = $4, lang = $5 WHERE id = $6", [
-      name,
+
+    if (!userId) {
+      return NextResponse.json({ success: false, message: "No autenticado" }, { status: 401 })
+    }
+
+    // Obtener los datos del formulario
+    const { career, interests, ideals, lang } = await request.json()
+    const formData = {
       career,
       interests,
       ideals,
-      lang,
-      userId,
-    ])
+      lang
+    }
+
+    
+
+    // Usar la función de servidor para guardar el perfil
+    const result = await saveUserProfile(userId, formData)
+    
+    if (!result.success) {
+      return NextResponse.json({ 
+        success: false, 
+        message: result.message || "Error al guardar el perfil" 
+      }, { status: 400 })
+    }
 
     return NextResponse.json({ success: true }, { status: 200 })
   } catch (error) {
-    console.error("Error updating user profile:", error)
-    return NextResponse.json({ success: false, message: "Failed to update user profile" }, { status: 500 })
+    console.error("Error saving profile:", error)
+    return NextResponse.json({ success: false, message: "Error al guardar el perfil" }, { status: 500 })
   }
 }

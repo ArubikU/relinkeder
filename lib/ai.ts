@@ -191,7 +191,7 @@ export const AI_MODELS: AIModel[] = [
 ]
 
 // Get user's API key for a provider
-async function getUserApiKey(userId: number, provider: AIProvider): Promise<string | null> {
+async function getUserApiKey(userId: string, provider: AIProvider): Promise<string | null> {
   const result = await db.query("SELECT key_value FROM api_keys WHERE user_id = $1 AND provider = $2", [
     userId,
     provider,
@@ -365,7 +365,7 @@ async function generateWithGemini(
 }
 
 // Generate text with any provider
-async function generateText(userId: number, prompt: string, modelId: string, temperature = 0.7, tokens = 2048): Promise<string> {
+async function generateText(userId: string, prompt: string, modelId: string, temperature = 0.7, tokens = 2048): Promise<string> {
   const model = AI_MODELS.find((m) => m.id === modelId)
 
   if (!model) {
@@ -440,7 +440,7 @@ async function processReferenceLinks(links: string[]): Promise<string> {
 
 // Generate topics using AI
 export async function generateTopics(
-  userId: number,
+  userId: string,
   referenceLinks: string[] = [],
   modelId = "cohere-command",
   extraInstructions = "",
@@ -542,7 +542,7 @@ export async function generateTopics(
 // Generate posts for a topic using AI
 export async function generatePosts(
   topicId: number,
-  userId: number,
+  userId: string,
   modelId = "cohere-command",
   useChainOfThought = false,
   schema: PostSchema = "default",

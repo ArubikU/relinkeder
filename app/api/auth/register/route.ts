@@ -1,43 +1,32 @@
-import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { createSession, hashPassword } from "@/lib/auth"
+import { auth, currentUser } from "@clerk/nextjs/server"
+import { type NextRequest, NextResponse } from "next/server"
 
-export async function POST(request: NextRequest) {
-  try {
-    const { name, email, password } = await request.json()
+export async function GET(request: NextRequest) {
+try{
+    const user = await auth()
+  if (!user.userId) {
+    return NextResponse.json({ success: false, message: "No autenticado" }, { status: 401 })
+  }
+  const duser = await currentUser()
+  const first_name = duser?.fullName || duser?.firstName || duser?.lastName || duser?.emailAddresses[0].emailAddress.split("@")[0] || ""
+  const primaryEmail = duser?.emailAddresses[0].emailAddress || ""
+  const id = user?.userId || ""
+    try {
+      // Crear usuario en la base de datos
+      await db.query(
+        "INSERT INTO users (id, email, name) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
+        [id, primaryEmail, first_name]
+      );
 
-    // Check if user already exists
-    const existingUser = await db.query("SELECT id FROM users WHERE email = $1", [email])
-
-    if (existingUser.length > 0) {
-      return NextResponse.json({ success: false, message: "Email already in use" }, { status: 400 })
+      return NextResponse.json({ success: true });
+    } catch (error) {
+      console.error('Error creando usuario en DB:', error);
+      return NextResponse.json({ success: false, error: 'Error creando usuario en la base de datos' }, { status: 500 });
     }
-
-    // Hash password
-    const hashedPassword = await hashPassword(password)
-
-    // Create user
-    const newUser = await db.query("INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id", [
-      name,
-      email,
-      hashedPassword,
-    ])
-
-    // Create session
-    const sessionToken = await createSession(newUser[0].id)
-
-    // Return success with session token
-    return NextResponse.json(
-      { success: true, userId: newUser[0].id },
-      {
-        status: 200,
-        headers: {
-          "Set-Cookie": `session_token=${sessionToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${60 * 60 * 24 * 7}`,
-        },
-      },
-    )
-  } catch (error) {
-    console.error("Error registering user:", error)
-    return NextResponse.json({ success: false, message: "Registration failed" }, { status: 500 })
+}
+catch (error) {
+    console.error("Error creating user:", error)
+    return NextResponse.json({ success: false, message: "Error al crear usuario" }, { status: 500 })
   }
 }

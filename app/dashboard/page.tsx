@@ -2,6 +2,7 @@
 
 import PostCard from "@/components/post-card"
 import ReferenceLinksInput from "@/components/reference-links-input"
+import RequireAuth from "@/components/require-auth"
 import TopicCard from "@/components/topic-card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -19,12 +20,14 @@ import {
   getUserApiKeys,
   saveReferenceLinks,
 } from "@/lib/client-api"
+import { useUser } from "@clerk/nextjs"
 import { AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
-export default function DashboardPage() {
+function DashboardPage() {
   const router = useRouter()
+  const { user: clerkUser, isLoaded } = useUser()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [isGeneratingTopics, setIsGeneratingTopics] = useState(false)
@@ -43,13 +46,28 @@ export default function DashboardPage() {
   const [extraInstructions, setExtraInstructions] = useState<string>("")
   const [extraInstructionsVisible, setExtraInstructionsVisible] = useState(false)
 
+
+  useEffect(() => {
+    //check if ?signUp=true is in the URL
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.has("signUp")) {
+      const signUp = urlParams.get("signUp")
+      if (signUp === "true") {
+        fetch("/api/auth/register")
+      }
+    }
+
+  },[])
+
   useEffect(() => {
     async function fetchUserData() {
+      if (!isLoaded || !clerkUser) return;
+      
       try {
         const userData = await getCurrentUser()
 
         if (!userData) {
-          router.push("/login")
+          router.push("/profile")
           return
         }
 
@@ -92,11 +110,10 @@ export default function DashboardPage() {
       } catch (error) {
         console.error("Error fetching posts:", error)
       }
-    }
-    fetchUserData()
+    }    fetchUserData()
     fetchTopics()
     fetchPosts()
-  }, [router])
+  }, [router, clerkUser, isLoaded])
 
   async function handleGenerateTopics() {
     setIsGeneratingTopics(true)
@@ -437,8 +454,18 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </div>      </div>
     </div>
   )
 }
+
+// Envolver la página del Dashboard con el componente RequireAuth
+function ProtectedDashboardPage() {
+  return (
+    <RequireAuth>
+      <DashboardPage />
+    </RequireAuth>
+  )
+}
+
+export default ProtectedDashboardPage

@@ -2,45 +2,16 @@
 
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { logoutUser } from "@/lib/client-api"
+import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import { Menu } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Logo from "./logo"
 
 export default function Header() {
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-
-  // Get path if is root or dashboard/profile to detect if user is logged in
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-
-  // Use useEffect to access window only on client side
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsLoggedIn(
-        window.location.pathname === "/" ||
-        window.location.pathname === "/dashboard" ||
-        window.location.pathname === "/profile"
-      )
-    }
-  }, [])
-
-
-  async function handleLogout() {
-    if (!isLoggedIn) {
-      router.push("/login")
-      return
-    }
-    try {
-      await logoutUser()
-      router.push("/login")
-    } catch (error) {
-      router.push("/register")
-      console.error("Error logging out:", error)
-    }
-  }
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white">
@@ -66,9 +37,13 @@ export default function Header() {
           </nav>
         </div>
         <div className="hidden items-center gap-4 md:flex">
-          <Button variant="ghost" onClick={handleLogout}>
-            {isLoggedIn ? "Logout" : "Login"}
-          </Button>
+            <SignedOut>
+              <SignInButton />
+              <SignUpButton />
+            </SignedOut>
+            <SignedIn>
+              <UserButton showName/>
+            </SignedIn>
         </div>
         <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
           <SheetTrigger asChild className="md:hidden">
@@ -104,16 +79,13 @@ export default function Header() {
                     </Link>
                   </li>
                   <li>
-                    <Button
-                      variant="ghost"
-                      className="p-0 text-gray-600 hover:text-primary"
-                      onClick={() => {
-                        setIsMenuOpen(false)
-                        handleLogout()
-                      }}
-                    >
-                      {isLoggedIn ? "Logout" : "Login"}
-                    </Button>
+            <SignedOut>
+              <SignInButton />
+              <SignUpButton />
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
                   </li>
                 </ul>
               </nav>

@@ -1,31 +1,21 @@
 import { sharePost } from "@/lib/actions"
-import { db } from "@/lib/db"
-import { cookies } from "next/headers"
+import { auth } from "@clerk/nextjs/server"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
-    // Get session token from cookies
-    const sessionToken = (await cookies()).get("session_token")?.value
+    // Obtener la sesión de Clerk
+    const { userId } = await auth()
 
-    if (!sessionToken) {
-      return NextResponse.json({ success: false, message: "Not authenticated" }, { status: 401 })
+    if (!userId) {
+      return NextResponse.json({ success: false, message: "No autenticado" }, { status: 401 })
     }
-
-    // Get user from session
-    const sessions = await db.query("SELECT user_id FROM sessions WHERE session_token = $1", [sessionToken])
-
-    if (!sessions.length) {
-      return NextResponse.json({ success: false, message: "Invalid session" }, { status: 401 })
-    }
-
-    const userId = sessions[0].user_id
 
     const {postId} = await request.json()
     if (!postId) {
       return NextResponse.json({ success: false, message: "Post ID is required" }, { status: 400 })
     }
-    const sharedPostN = await sharePost(postId,userId)
+    const sharedPostN = await sharePost(userId, postId)
     if (!sharedPostN) {
       return NextResponse.json({ success: false, message: "Failed to share post" }, { status: 500 })
     }

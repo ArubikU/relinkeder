@@ -1,24 +1,15 @@
 import { db } from "@/lib/db"
-import { cookies } from "next/headers"
+import { auth } from "@clerk/nextjs/server"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
   try {
-    // Get session token from cookies
-    const sessionToken = (await cookies()).get("session_token")?.value
+    // Obtener la sesión de Clerk
+    const { userId } = await auth()
 
-    if (!sessionToken) {
-      return NextResponse.json({ success: false, message: "Not authenticated" }, { status: 401 })
+    if (!userId) {
+      return NextResponse.json({ success: false, message: "No autenticado" }, { status: 401 })
     }
-
-    // Get user from session
-    const sessions = await db.query("SELECT user_id FROM sessions WHERE session_token = $1", [sessionToken])
-
-    if (!sessions.length) {
-      return NextResponse.json({ success: false, message: "Invalid session" }, { status: 401 })
-    }
-
-    const userId = sessions[0].user_id
 
     // Get API keys
     const apiKeys = await db.query("SELECT provider, key_value FROM api_keys WHERE user_id = $1", [userId])
@@ -38,21 +29,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get session token from cookies
-    const sessionToken = (await cookies()).get("session_token")?.value
+    // Obtener la sesión de Clerk
+    const { userId } = await auth()
 
-    if (!sessionToken) {
-      return NextResponse.json({ success: false, message: "Not authenticated" }, { status: 401 })
+    if (!userId) {
+      return NextResponse.json({ success: false, message: "No autenticado" }, { status: 401 })
     }
-
-    // Get user from session
-    const sessions = await db.query("SELECT user_id FROM sessions WHERE session_token = $1", [sessionToken])
-
-    if (!sessions.length) {
-      return NextResponse.json({ success: false, message: "Invalid session" }, { status: 401 })
-    }
-
-    const userId = sessions[0].user_id
 
     // Get request body
     const apiKeys = await request.json()

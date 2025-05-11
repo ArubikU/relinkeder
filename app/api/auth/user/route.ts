@@ -1,35 +1,26 @@
-import { db } from "@/lib/db"
-import { cookies } from "next/headers"
+import { getUserData } from "@/lib/actions"
+import { auth } from "@clerk/nextjs/server"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
   try {
-    // Get session token from cookies
-    const sessionToken = (await cookies()).get("session_token")?.value
+    // Obtener la sesión de Clerk
+    const { userId } = await auth()
 
-    if (!sessionToken) {
-      return NextResponse.json({ success: false, message: "Not authenticated" }, { status: 401 })
+    if (!userId) {
+      return NextResponse.json({ success: false, message: "No autenticado" }, { status: 401 })
     }
 
-    // Get user from session
-    const sessions = await db.query("SELECT user_id FROM sessions WHERE session_token = $1", [sessionToken])
+    // Obtener datos del usuario usando la función del servidor
+    const userData = await getUserData(userId)
 
-    if (!sessions.length) {
-      return NextResponse.json({ success: false, message: "Invalid session" }, { status: 401 })
+    if (!userData) {
+      return NextResponse.json({ success: false, message: "Usuario no encontrado" }, { status: 404 })
     }
 
-    const userId = sessions[0].user_id
-
-    // Get user data
-    const users = await db.query("SELECT id, name, email, career, interests, ideals, lang FROM users WHERE id = $1", [userId])
-
-    if (!users.length) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
-    }
-
-    return NextResponse.json({ success: true, user: users[0] }, { status: 200 })
+    return NextResponse.json({ success: true, user: userData }, { status: 200 })
   } catch (error) {
     console.error("Error getting user:", error)
-    return NextResponse.json({ success: false, message: "Failed to get user" }, { status: 500 })
+    return NextResponse.json({ success: false, message: "Error al obtener usuario" }, { status: 500 })
   }
 }
