@@ -39,11 +39,9 @@ ReLinkeder is built with the following technologies:
 
 ## Screenshots
 
-![Dashboard](https://i.imgur.com/placeholder.png)
-*(Please replace with actual screenshots of your application)*
+![Dashboard](https://i.imgur.com/Uvqbded.png)
 
-![Profile Page](https://i.imgur.com/placeholder2.png)
-*(Please replace with actual screenshots of your application)*
+![Profile Page](https://i.imgur.com/9L3BIKh.png)
 
 ## Authentication with Clerk
 
