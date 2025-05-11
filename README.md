@@ -93,7 +93,7 @@ if (!userId) {
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/relinkeder.git
+git clone https://github.com/ArubikU/relinkeder.git
 cd relinkeder
 ```
 
@@ -134,4 +134,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Author
 
-[Your Name](https://github.com/yourusername)
+[Your Name](https://github.com/ArubikU)
