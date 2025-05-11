@@ -6,19 +6,26 @@ import { logoutUser } from "@/lib/client-api"
 import { Menu } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Logo from "./logo"
 
 export default function Header() {
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  //get path if is root or dashboard / profile to detect if is logged in get from the full window.location
-  let isLoggedIn = false
-  if (typeof window !== "undefined") {
-    isLoggedIn = window.location.pathname === "/" || window.location.pathname === "/dashboard" || window.location.pathname === "/profile"
-  }
+  // Get path if is root or dashboard/profile to detect if user is logged in
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
+  // Use useEffect to access window only on client side
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsLoggedIn(
+        window.location.pathname === "/" ||
+        window.location.pathname === "/dashboard" ||
+        window.location.pathname === "/profile"
+      )
+    }
+  }, [])
 
 
   async function handleLogout() {
@@ -70,7 +77,7 @@ export default function Header() {
               <span className="sr-only">Toggle menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left">
+          <SheetContent side="right" className="relinkeder-card">
             <div className="flex flex-col gap-8 py-4">
               <Link href="/" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
                 <Logo width={34} height={34} />

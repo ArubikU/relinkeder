@@ -13,15 +13,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Clear session cookie
-    return NextResponse.json(
+    const response =  NextResponse.json(
       { success: true },
       {
         status: 200,
         headers: {
-          "Set-Cookie": `session_token=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`,
+          "Set-Cookie": `Path=/; HttpOnly; SameSite=Strict; Max-Age=0`,
         },
       },
     )
+    response.cookies.delete("session_token")
+    return response
   } catch (error) {
     console.error("Error logging out:", error)
     return NextResponse.json({ success: false, message: "Logout failed" }, { status: 500 })

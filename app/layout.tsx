@@ -21,6 +21,9 @@ export default function RootLayout({
         <link rel="icon" href="/logo.svg" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#ffffff" />
+        <meta name="og:title" content="ReLinkeder Post Generator" />
+        <meta name="og:description" content="Generate linkedin posts with AI" />
+        <meta name="og:image" content="/logo.svg" />
       </head>
       <body className={inter.className}>
         <CustomAlertProvider>

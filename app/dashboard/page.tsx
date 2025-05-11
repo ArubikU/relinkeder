@@ -32,7 +32,7 @@ export default function DashboardPage() {
   const [topics, setTopics] = useState<any[]>([])
   const [posts, setPosts] = useState<any[]>([])
   const [selectedTopic, setSelectedTopic] = useState<number | null>(null)
-  const [selectedModel, setSelectedModel] = useState("cohere-command")
+  const [selectedModel, setSelectedModel] = useState("cohere-command-r-plus")
   const [selectedSchema, setSelectedSchema] = useState<PostSchema>("default")
   const [referenceLinks, setReferenceLinks] = useState<string[]>([])
   const [useChainOfThought, setUseChainOfThought] = useState(true)

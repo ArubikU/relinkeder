@@ -4,7 +4,7 @@ import { NextResponse } from "next/server"
 // This function can be marked `async` if using `await` inside
 export function middleware(request: NextRequest) {
   const sessionToken = request.cookies.get("session_token")?.value
-  const isLoggedIn = !!sessionToken
+  let isLoggedIn = !!sessionToken
   const isAuthPage = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/register"
   const isProtectedRoute =
     request.nextUrl.pathname === "/dashboard" ||
@@ -22,11 +22,6 @@ export function middleware(request: NextRequest) {
   // If the user is not logged in and trying to access protected routes, redirect to login
   if (!isLoggedIn && isProtectedRoute) {
     return NextResponse.redirect(new URL("/login", request.url))
-  }
-
-  // If the user is logged in and on the home page, redirect to dashboard
-  if (isLoggedIn && request.nextUrl.pathname === "/") {
-    return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
   return NextResponse.next()

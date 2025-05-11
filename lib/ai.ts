@@ -65,6 +65,13 @@ export const POST_SCHEMAS: PostSchemaTemplate[] = [
 export const AI_MODELS: AIModel[] = [
   // Cohere
   {
+    id: "cohere-command-r-plus",
+    provider: "cohere",
+    name: "Command R+",
+    description: "Most advanced reasoning model",
+    capabilities: ["text-generation", "chain-of-thought"],
+  },
+  {
     id: "cohere-command",
     provider: "cohere",
     name: "Command",
@@ -83,13 +90,6 @@ export const AI_MODELS: AIModel[] = [
     provider: "cohere",
     name: "Command R",
     description: "Enhanced reasoning capabilities",
-    capabilities: ["text-generation", "chain-of-thought"],
-  },
-  {
-    id: "cohere-command-r-plus",
-    provider: "cohere",
-    name: "Command R+",
-    description: "Most advanced reasoning model",
     capabilities: ["text-generation", "chain-of-thought"],
   },
   // OpenAI

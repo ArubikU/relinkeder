@@ -19,10 +19,10 @@ export default function Home() {
           your network.
         </p>
         <div className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
-          <Button asChild size="lg" className="rounded-full">
+          <Button asChild size="lg" className="rounded-full hover:bg-primary-light">
             <Link href="/dashboard">Get Started</Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="rounded-full">
+          <Button asChild variant="outline" size="lg" className="rounded-full hover:bg-primary-light">
             <Link href="/about">Learn More</Link>
           </Button>
         </div>

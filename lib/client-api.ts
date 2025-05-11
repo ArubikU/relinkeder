@@ -171,7 +171,7 @@ export async function deleteTopic(topicId: number) {
 }
 export async function generatePosts(
   topicId: number,
-  modelId = "cohere-command",
+  modelId = "cohere-command-r-plus",
   useChainOfThought = false,
   schema = "default",
   extraInstructions = ""
