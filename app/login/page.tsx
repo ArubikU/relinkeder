@@ -1,5 +1,6 @@
 "use client";
 
+import ProtectedByClerkFooter from "@/components/clerk/protected-by";
 import * as Clerk from "@clerk/elements/common";
 import * as SignIn from "@clerk/elements/sign-in";
 import { AnimatePresence, motion } from "framer-motion";
@@ -151,6 +152,7 @@ export default function SignInPage() {
                 Create one
               </Clerk.Link>
             </p>
+            <ProtectedByClerkFooter></ProtectedByClerkFooter>
           </footer>
         </SignIn.Step>
       </SignIn.Root>

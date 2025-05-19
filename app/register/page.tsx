@@ -1,5 +1,6 @@
 "use client";
 
+import ProtectedByClerkFooter from "@/components/clerk/protected-by";
 import * as Clerk from "@clerk/elements/common";
 import * as SignUp from "@clerk/elements/sign-up";
 import { AnimatePresence, motion } from "framer-motion";
@@ -180,6 +181,7 @@ export default function SignUpPage() {
                 Sign in
               </Clerk.Link>
             </p>
+          <ProtectedByClerkFooter></ProtectedByClerkFooter>
           </footer>
         </SignUp.Step>
         <SignUp.Step
@@ -215,6 +217,7 @@ export default function SignUpPage() {
               Verify
             </SignUp.Action>
           </SignUp.Strategy>
+          <ProtectedByClerkFooter></ProtectedByClerkFooter>
         </SignUp.Step>
         <SignUp.Step
           name="continue"
@@ -267,6 +270,7 @@ export default function SignUpPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
           </SignUp.Action >
+          <ProtectedByClerkFooter></ProtectedByClerkFooter>
         </SignUp.Step>
       </SignUp.Root>
     </div>
