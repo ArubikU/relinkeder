@@ -1,5 +1,6 @@
 "use client"
 
+import MobilePostCard from "@/components/mobile-post-card"
 import PostCard from "@/components/post-card"
 import ReferenceLinksInput from "@/components/reference-links-input"
 import RequireAuth from "@/components/require-auth"
@@ -20,6 +21,7 @@ import {
   getUserApiKeys,
   saveReferenceLinks,
 } from "@/lib/client-api"
+import useLocalStorage from "@/lib/use-local-storage"
 import { useUser } from "@clerk/nextjs"
 import { AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -43,8 +45,13 @@ function DashboardPage() {
   const [availableSchemas, setAvailableSchemas] = useState<PostSchemaTemplate[]>([])
   const [userApiKeys, setUserApiKeys] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
-  const [extraInstructions, setExtraInstructions] = useState<string>("")
-  const [extraInstructionsVisible, setExtraInstructionsVisible] = useState(false)
+  const [extraInstructions, setExtraInstructions] = useLocalStorage<string>("extra-instructions","")
+  const [extraInstructionsVisible, setExtraInstructionsVisible] = useLocalStorage("extra-instructions-visible",false)
+  const [topicAmount, setTopicAmount] = useLocalStorage("topic-amount", 5)
+  const [postAmount, setPostAmount] = useLocalStorage("post-amount", 5)
+
+
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches
 
 
   useEffect(() => {
@@ -67,7 +74,7 @@ function DashboardPage() {
         const userData = await getCurrentUser()
 
         if (!userData) {
-          router.push("/profile")
+          router.push("/settings")
           return
         }
 
@@ -130,7 +137,7 @@ function DashboardPage() {
         throw new Error(`You need to add your ${modelInfo.provider} API key in your profile settings`)
       }
 
-      const newTopics = await generateTopics(referenceLinks, selectedModel, extraInstructions)
+      const newTopics = await generateTopics(referenceLinks, selectedModel, extraInstructions, topicAmount)
       setTopics(prevTopics => [...newTopics, ...prevTopics])
     } catch (error: any) {
       console.error("Error generating topics:", error)
@@ -156,7 +163,7 @@ function DashboardPage() {
         throw new Error(`You need to add your ${modelInfo.provider} API key in your profile settings`)
       }
 
-      const newPosts = await generatePosts(topicId, selectedModel, useChainOfThought, selectedSchema, extraInstructions)
+      const newPosts = await generatePosts(topicId, selectedModel, useChainOfThought, selectedSchema, extraInstructions, referenceLinks, postAmount)
       setPosts(prevPosts => [...newPosts, ...prevPosts])
     } catch (error: any) {
       console.error("Error generating posts:", error)
@@ -293,9 +300,21 @@ function DashboardPage() {
                 </Card>
               ) : (
                 <div className="space-y-6">
-                  {posts.map((post) => (
-                    <PostCard key={post.id} post={post} setPosts={setPosts}/>
-                  ))}
+                  
+                  {posts.map((post) => {
+
+                    if (isMobile) {
+                      return (
+                    <MobilePostCard key={post.id} post={post} setPosts={setPosts} />
+                      )
+                    }else{
+                      
+                      return (
+                    <PostCard key={post.id} post={post} setPosts={setPosts} />
+                      )
+                    }
+
+                  })}
                 </div>
               )}
             </TabsContent>
@@ -423,6 +442,37 @@ function DashboardPage() {
                   </Select>
                 </div>
 
+                {/*amount of topics and posts*/}
+                <div>
+                  <h4 className="text-md font-semibold mb-2">Generation Amounts</h4>
+                  <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="topic-amount" className="min-w-[120px]">Topics to Generate</Label>
+                    <input
+                    id="topic-amount"
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={topicAmount}
+                    onChange={(e) => setTopicAmount(Number(e.target.value))}
+                    className="w-20 rounded border border-gray-300 p-1 text-sm"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="post-amount" className="min-w-[120px]">Posts per Topic</Label>
+                    <input
+                    id="post-amount"
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={postAmount}
+                    onChange={(e) => setPostAmount(Number(e.target.value))}
+                    className="w-20 rounded border border-gray-300 p-1 text-sm"
+                    />
+                  </div>
+                  </div>
+                </div>
+
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -444,7 +494,7 @@ function DashboardPage() {
                     <AlertDescription>
                       You need to add your {availableModels.find((m) => m.id === selectedModel)?.provider} API key in
                       your{" "}
-                      <a href="/profile" className="font-medium text-primary hover:underline">
+                      <a href="/settings" className="font-medium text-primary hover:underline">
                         profile settings
                       </a>{" "}
                       to use this model.

@@ -85,13 +85,13 @@ export async function getTopics() {
   return data.topics
 }
 
-export async function generateTopics(referenceLinks: string[] = [], modelId = "cohere-command", extraInstructions = "") {
+export async function generateTopics(referenceLinks: string[] = [], modelId = "cohere-command", extraInstructions = "", amount = 5) {
   const response = await fetch("/api/topics", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ referenceLinks, modelId, extraInstructions }),
+    body: JSON.stringify({ referenceLinks, modelId, extraInstructions, amount }),
   })
 
   const data = await response.json()
@@ -142,14 +142,16 @@ export async function generatePosts(
   modelId = "cohere-command-r-plus",
   useChainOfThought = false,
   schema = "default",
-  extraInstructions = ""
+  extraInstructions = "",
+  referenceLinks: string[] = [],
+  amount = 5
 ) {
   const response = await fetch("/api/posts", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ topicId, modelId, useChainOfThought, schema, extraInstructions }),
+    body: JSON.stringify({ topicId, modelId, useChainOfThought, schema, extraInstructions, referenceLinks, amount }),
   })
 
   const data = await response.json()

@@ -1,12 +1,12 @@
 "use server"
 
 import {
-  AI_MODELS,
-  generatePosts as aiGeneratePosts,
-  generateTopics as aiGenerateTopics,
-  POST_SCHEMAS,
-  type AIProvider,
-  type PostSchema,
+    AI_MODELS,
+    generatePosts as aiGeneratePosts,
+    generateTopics as aiGenerateTopics,
+    POST_SCHEMAS,
+    type AIProvider,
+    type PostSchema,
 } from "@/lib/ai"
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
@@ -42,7 +42,7 @@ export async function saveUserProfile(userId: string, formData: { career: string
        SET career = $2, interests = $3, ideals = $4, lang = $5`,
       [userId, career, interests, ideals, lang]
     )
-    revalidatePath("/profile")
+    revalidatePath("/settings")
     return { success: true }
   } catch (error) {
     console.error("Error saving profile:", error)
@@ -67,7 +67,7 @@ export async function saveApiKeys(userId: string, formData: FormData) {
         )
       }
     }
-    revalidatePath("/profile")
+    revalidatePath("/settings")
     return { success: true }
   } catch (error) {
     console.error("Error saving API keys:", error)

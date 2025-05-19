@@ -32,10 +32,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Get request body
-    const { referenceLinks, modelId, extraInstructions } = await request.json()
+    const { referenceLinks, modelId, extraInstructions, amount } = await request.json()
 
     // Generate topics
-    const topics = await generateTopics(userId, referenceLinks, modelId, extraInstructions)
+    const topics = await generateTopics(userId, referenceLinks, modelId, extraInstructions, amount)
 
     return NextResponse.json({ success: true, topics }, { status: 200 })
   } catch (error) {

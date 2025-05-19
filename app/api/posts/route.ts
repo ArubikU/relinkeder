@@ -41,10 +41,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Get request body
-    const { topicId, modelId, useChainOfThought, schema, extraInstructions } = await request.json()
+    const { topicId, modelId, useChainOfThought, schema, extraInstructions, referenceLinks, amount } = await request.json()
 
     // Generate posts
-    const posts = await generatePosts(topicId, userId, modelId, useChainOfThought, schema as PostSchema, extraInstructions)
+    const posts = await generatePosts(topicId, userId, modelId, useChainOfThought, schema as PostSchema, extraInstructions, referenceLinks, amount)
 
     return NextResponse.json({ success: true, posts }, { status: 200 })
   } catch (error) {

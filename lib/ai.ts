@@ -21,6 +21,19 @@ export interface PostSchemaTemplate {
   name: string
   description: string
 }
+function sanitizeJSONString(jsonString: string): string {
+  // Esta expresión busca todo string JSON (entre comillas dobles)
+      if (jsonString.startsWith("```json")) {
+        jsonString = jsonString.replace(/^```json/, "").replace(/```$/, "").trim()
+      }
+  return jsonString.replace(/"(?:\\.|[^"\\])*"/g, (match) => {
+    return match.replace(/[\u0000-\u001F]/g, (char) => {
+      const code = char.charCodeAt(0).toString(16).padStart(4, '0');
+      return `\\u${code}`;
+    });
+  });
+}
+
 
 // Post schema templates
 export const POST_SCHEMAS: PostSchemaTemplate[] = [
@@ -69,6 +82,20 @@ export const AI_MODELS: AIModel[] = [
     provider: "cohere",
     name: "Command R+",
     description: "Most advanced reasoning model",
+    capabilities: ["text-generation", "chain-of-thought"],
+  },
+  {
+    id: "command-a-03-2025",
+    provider: "cohere",
+    name: "Command A 03-2025",
+    description: "Advanced reasoning and multimodal capabilities",
+    capabilities: ["text-generation", "chain-of-thought", "multimodal", "chatty"],
+  },
+  {
+    id: "command-r7b-12-2024",
+    provider: "cohere",
+    name: "Command R7B",
+    description: "Smaller, faster model with advanced reasoning",
     capabilities: ["text-generation", "chain-of-thought"],
   },
   {
@@ -213,6 +240,31 @@ async function generateWithCohere(
   tokens = 2048,
 ): Promise<string> {
   const modelName = model.replace("cohere-", "")
+
+  const isChatty = AI_MODELS.find((m) => m.id === model)?.capabilities.includes("chatty")
+  if (isChatty) {
+    const response = await fetch("https://api.cohere.ai/v2/chat", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: prompt }],
+        temperature,
+        model: modelName,
+        max_tokens: tokens,
+      }),
+    })
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(`Cohere API error: ${error.message || response.statusText}`)
+    }
+
+    const data = await response.json()
+    return data.message.content[0].text
+  }
 
   const response = await fetch("https://api.cohere.ai/v1/generate", {
     method: "POST",
@@ -380,22 +432,22 @@ async function generateText(userId: string, prompt: string, modelId: string, tem
 
   switch (model.provider) {
     case "cohere":
-      return generateWithCohere(prompt, apiKey, model.id, temperature,tokens)
+      return generateWithCohere(prompt, apiKey, model.id, temperature, tokens)
     case "openai":
-      return generateWithOpenAI(prompt, apiKey, model.id, temperature,tokens)
+      return generateWithOpenAI(prompt, apiKey, model.id, temperature, tokens)
     case "mistral":
-      return generateWithMistral(prompt, apiKey, model.id, temperature,tokens)
+      return generateWithMistral(prompt, apiKey, model.id, temperature, tokens)
     case "deepseek":
-      return generateWithDeepSeek(prompt, apiKey, model.id, temperature,tokens)
+      return generateWithDeepSeek(prompt, apiKey, model.id, temperature, tokens)
     case "gemini":
-      return generateWithGemini(prompt, apiKey, model.id, temperature,tokens)
+      return generateWithGemini(prompt, apiKey, model.id, temperature, tokens)
     default:
       throw new Error(`Provider ${model.provider} not supported`)
   }
 }
 
 // Process reference links to get content
-async function processReferenceLinks(links: string[]): Promise<string> {
+async function processReferenceLinks(links: string[], userId: string, modelId: string): Promise<string> {
   if (links.length === 0) {
     return ""
   }
@@ -405,8 +457,10 @@ async function processReferenceLinks(links: string[]): Promise<string> {
   for (const url of links) {
     try {
       // Check if we already have scraped this URL
-      const existingContent = await db.query("SELECT title, summary FROM scraped_content WHERE url = $1", [url])
-
+      const existingContent = await db.query("SELECT title, summary, created_at FROM scraped_content WHERE url = $1", [url])
+      const currentTime = new Date()
+      //chcek if the content is older than 1 week
+      //const isOlder = new Date(existingContent[0].created_at)-currentTime
       if (existingContent.length > 0) {
         contentSummaries.push(`
           URL: ${url}
@@ -417,13 +471,30 @@ async function processReferenceLinks(links: string[]): Promise<string> {
         // Scrape the URL
         const { title, content } = await scrapeUrl(url)
 
+
+        //create a summary of the content using ai
+
+        const summaryPrompt = `
+          Summarize the following content in no more than 950 words.
+          Priorise long-term value and relevance.
+          and technical details.
+          and dates.
+          ${content}
+
+          The summary language should be on english.
+          Just return the summary no other text:
+        `
+
+        const summary = await generateText(userId, summaryPrompt, modelId, 0.7,2048*4)
+
         // Store in database
-        await db.query("INSERT INTO scraped_content (url, title, content) VALUES ($1, $2, $3)", [url, title, content])
+        await db.query("INSERT INTO scraped_content (url, title, content, summary) VALUES ($1, $2, $3, $4)", [url, title, content, summary])
 
         contentSummaries.push(`
           URL: ${url}
           Title: ${title || "Unknown"}
           Content: ${content.substring(0, 1000)}${content.length > 1000 ? "..." : ""}
+          Summary: ${summary}
         `)
       }
     } catch (error) {
@@ -444,6 +515,7 @@ export async function generateTopics(
   referenceLinks: string[] = [],
   modelId = "cohere-command",
   extraInstructions = "",
+  amount = 5,
 ): Promise<any[]> {
   try {
     // Get user profile
@@ -463,7 +535,7 @@ export async function generateTopics(
     }
 
     // Process reference links to get content
-    const referencesContent = await processReferenceLinks(links)
+    const referencesContent = await processReferenceLinks(links, userId, modelId)
 
     // Get previously generated topics to avoid duplicates
     const previousTopics = await db.query("SELECT topic_hash FROM generated_topics WHERE user_id = $1", [userId])
@@ -471,7 +543,7 @@ export async function generateTopics(
 
     // Generate topics using AI
     const prompt = `
-      Generate 5 trending and relevant professional topics for a LinkedIn post.
+      Generate ${amount} trending and relevant professional topics for a LinkedIn post.
       The user works in ${user.career || "technology"}.
       Their interests include: ${user.interests || "professional development"}.
       Their professional values include: ${user.ideals || "innovation and growth"}.
@@ -490,6 +562,7 @@ export async function generateTopics(
       Format the response as a JSON array with objects containing 'title' and 'description' fields.
       like this:
       Just return the JSON array no other text:
+      (Do not return as markdown code block, just return the JSON array as raw text)
       [
         {
           "title": "Topic 1",
@@ -502,7 +575,10 @@ export async function generateTopics(
       ]
     `
 
-    const text = await generateText(userId, prompt, modelId, 0.7)
+    let text = await generateText(userId, prompt, modelId, 0.7)
+
+    text = sanitizeJSONString(text)
+
     const topicsData = JSON.parse(text)
 
     // Filter out previously generated topics and save new ones
@@ -547,6 +623,8 @@ export async function generatePosts(
   useChainOfThought = false,
   schema: PostSchema = "default",
   extraInstructions = "",
+  links: string[],
+  amount: number = 5,
 ): Promise<any[]> {
   try {
     // Get the topic
@@ -555,6 +633,8 @@ export async function generatePosts(
     if (!topicResult.length) {
       throw new Error("Topic not found or doesn't belong to user")
     }
+    
+    const referencesContent = await processReferenceLinks(links, userId, modelId)
 
     const topic = topicResult[0]
 
@@ -629,7 +709,7 @@ export async function generatePosts(
 
     // Generate posts using AI
     let prompt = `
-      Generate 5 engaging LinkedIn posts about "${topic.title}".
+      Generate ${amount} engaging LinkedIn posts about "${topic.title}".
       The user works in ${user.career || "technology"}.
       Their interests include: ${user.interests || "professional development"}.
       Their professional values include: ${user.ideals || "innovation and growth"}.
@@ -639,157 +719,210 @@ export async function generatePosts(
       For each post:
       1. Make it professional and engaging
       2. Include relevant hashtags
-      3. Keep it between 150-600 words
-      4. Make it sound authentic and personal
-      5. Include a suggested image description that could be used to search for or generate an image with AI
+      3. Make it sound authentic and personal
+      4. Include a suggested image description that could be used to search for or generate an image with AI (image_suggestion field) [Be detailed]
       
       Follow these extra instructions if provided:
       ${extraInstructions}
 
-      DO NOT include the image suggestion in the post content.
+      Include the content from the reference links that should inform the posts:
+      ${referencesContent ? `\n${referencesContent}` : ""}
+
+      Suggestions:
+      Dot make overwhelming the reader with too much information.
+      Should not be too long, but not too short.
+      Likely to resonate with professionals in the field.
+
       The content language should be on ${langToFormated(user.lang || "en")} .
       Format the response as a JSON array with objects containing:
       - 'content': The final LinkedIn post
       - 'image_suggestion': A brief description of an image that would complement the post
+      - 'title': A title for the post
+      DO NOT include the image suggestion in the post content.
       like this:
       Just return the JSON array no other text:
+      (Do not return as markdown code block, just return the JSON array as raw text)
       [
         {
           "content": "Post 1 content",
-          "reasoning": "Post 1 reasoning",
-          "image_suggestion": "Post 1 image suggestion"
+          "image_suggestion": "Post 1 image suggestion",
+          "title": "Post 1 title"
         },
         {
           "content": "Post 2 content",
-          "reasoning": "Post 2 reasoning",
-          "image_suggestion": "Post 2 image suggestion"
+          "image_suggestion": "Post 2 image suggestion",
+          "title": "Post 2 title"
         }
       ]
     `
 
     let chainOfThoughts: string[] = []
-
+    let postsData: any[] = []
     if (useChainOfThought) {
       // Step 1: Generate chain-of-thought reasoning for each post
       const cotPrompt = `
-      For the topic "${topic.title}", the user works in ${user.career || "technology"}.
-      Their interests include: ${user.interests || "professional development"}.
-      Their professional values include: ${user.ideals || "innovation and growth"}.
+    For the topic "${topic.title}", the user works in ${user.career || "technology"}.
+    Their interests include: ${user.interests || "professional development"}.
+    Their professional values include: ${user.ideals || "innovation and growth"}.
 
-      ${schemaInstructions}
+    ${schemaInstructions}
 
-      Generate a step-by-step chain-of-thought reasoning for creating 5 engaging LinkedIn posts about this topic.
-      For each, consider:
-      1. The target audience for the post
-      2. What aspects of the topic are most relevant to the user's field
-      3. How to frame the topic to align with the user's professional values
-      4. The structure: hook, main points, call to action
-      5. What hashtags would increase visibility
-      6. What kind of image would complement the post
+    Generate a step-by-step chain-of-thought reasoning for creating ${amount} engaging LinkedIn posts about this topic.
+    For each post, provide a numbered list of reasoning steps, each on a new line, covering:
+    1. The target audience for the post.
+    2. The most relevant aspects of the topic for the user's field.
+    3. How to frame the topic to align with the user's professional values.
+    4. The structure: hook, main points, call to action.
+    5. Hashtags that would increase visibility.
+    6. A detailed image suggestion that would complement the post.
 
-      Format the response as a JSON array of 5 objects, each with a 'reasoning' field.
-      Just return the JSON array, no other text:
-      [
-        { "reasoning": "Step-by-step reasoning for post 1" },
-        { "reasoning": "Step-by-step reasoning for post 2" },
-        { "reasoning": "Step-by-step reasoning for post 3" },
-        { "reasoning": "Step-by-step reasoning for post 4" },
-        { "reasoning": "Step-by-step reasoning for post 5" }
-      ]
-      `
+    Guidelines:
+    - Make each reasoning list clear, concise, and actionable.
+    - Use the following checklist for each post:
+      🧠 Is it clear and concise? Break long blocks into short, scannable paragraphs.
+      💡 Does it spark curiosity or offer value? Share insights, lessons, or unique perspectives.
+      🎯 Is it relevant to professionals? Focus on growth, innovation, career, or collaboration.
+      📢 Is there a reason to engage or share? Include a hook or question to start conversations.
+      🧍‍♂️ Does it sound professional? Keep the tone respectful, relatable, and typo-free.
+
+    Format the response as a JSON array of ${amount} objects, each with a 'reasoning' field.
+    Each 'reasoning' value should be a single string with each step on a new line, numbered (e.g., "1. ...\\n2. ...\\n3. ...").
+    Just return the JSON array, no other text:
+    [
+      { "reasoning": "1. Target audience: tech professionals.\\n2. Relevant aspects: latest trends in AI.\\n3. Framing: innovation and growth.\\n4. Structure: hook, main points, call to action.\\n5. Hashtags: #AI #Innovation #Growth\\n6. Image suggestion: AI technology in action." },
+      { "reasoning": "..." }
+    ]
+    `
       const cotText = await generateText(userId, cotPrompt, modelId, 0.7, 2048)
       const cotData = JSON.parse(cotText)
       chainOfThoughts = cotData.map((item: any) => item.reasoning)
-
-      // Step 2: Generate posts using the chain-of-thoughts
-      prompt = `
-      Generate 5 engaging LinkedIn posts about "${topic.title}".
-      The user works in ${user.career || "technology"}.
-      Their interests include: ${user.interests || "professional development"}.
-      Their professional values include: ${user.ideals || "innovation and growth"}.
-
-      ${schemaInstructions}
-
-      For each post, use the following chain-of-thought reasoning:
-      ${chainOfThoughts.map((cot, idx) => `Post ${idx + 1} reasoning: ${cot}`).join("\n\n")}
-
-      Follow these extra instructions if provided:
-      ${extraInstructions}
-
-      For each post:
-      1. Make it professional and engaging
-      2. Include relevant hashtags
-      3. Keep it between 150-360 words
-      4. Make it sound authentic and personal
-      5. Include a suggested image description that could be used to search for or generate an image with AI
-
-      Format the response as a JSON array with objects containing:
-      - 'content': The final LinkedIn post
-      - 'reasoning': The step-by-step thought process used (from above)
-      - 'image_suggestion': A brief description of an image that would complement the post
-
-      DO NOT include the image suggestion in the post content.
-      Return the content and image suggestion in the language ${langToFormated(user.lang || "en")}.
-      Just return the JSON array, no other text:
-      [
-        {
-        "content": "Post 1 content",
-        "reasoning": "Post 1 reasoning",
-        "image_suggestion": "Post 1 image suggestion"
-        },
-        {
-        "content": "Post 2 content",
-        "reasoning": "Post 2 reasoning",
-        "image_suggestion": "Post 2 image suggestion"
+      for (let i = 0; i < chainOfThoughts.length; i++) {
+        if (chainOfThoughts[i].startsWith("{")) {
+          chainOfThoughts[i] = chainOfThoughts[i].replace(/^\{/, "").replace(/\}$/, "").trim()
+          //if "," convert to "\n"
+          chainOfThoughts[i] = chainOfThoughts[i].replace(/,/g, "\n")
+          // remove all double quotes
+          chainOfThoughts[i] = chainOfThoughts[i].replace(/"/g, "")
+          
         }
-      ]
-      `
+      }
+      
+
+      const postPromises = chainOfThoughts.map((cot, idx) => {
+        const singlePrompt = `
+  Generate one engaging LinkedIn post about "${topic.title}".
+  The user works in ${user.career || "technology"}.
+  Their interests include: ${user.interests || "professional development"}.
+  Their professional values include: ${user.ideals || "innovation and growth"}.
+
+  ${schemaInstructions}
+
+  Use the following chain-of-thought reasoning for this post:
+  ${cot}
+
+  Follow these extra instructions if provided:
+  ${extraInstructions}
+
+  Include the content from the reference links that should inform the post:
+  ${referencesContent ? `\n${referencesContent}` : ""}
+
+  Requirements:
+  1. Make it professional and engaging
+  2. Include relevant hashtags
+  3. Make it sound authentic and personal
+  4. Include a suggested image description that could be used to search for or generate an image with AI (image_suggestion field) [Be detailed]
+
+  Suggestions:
+  Dot make overwhelming the reader with too much information.
+  Should not be too long, but not too short.
+  Likely to resonate with professionals in the field.
+
+  Format the response as a JSON object with:
+  - 'content': The final LinkedIn post
+  - 'image_suggestion': A brief image description
+  - 'title': A title for the post
+
+  Language: ${langToFormated(user.lang || "en")}
+  Just return the JSON object, no other text:
+  DO NOT include the image suggestion in the post content.
+  Return the content and image suggestion in the language ${langToFormated(user.lang || "en")}.
+  Just return the JSON array, no other text:
+  (Do not return as markdown code block, just return the JSON array as raw text)
+    {
+    "content": "Post content",
+    "image_suggestion": "Post image suggestion",
+    "title": "Post title"
+    }
+  `
+
+        return generateText(userId, singlePrompt, modelId, 0.7, 2048).then(res => {
+          const clean = sanitizeJSONString(res)
+          const parsed = JSON.parse(clean)
+          parsed.reasoning = cot // opcional: agregar reasoning al resultado
+          return parsed
+        })
+      })
+
+      postsData = await Promise.all(postPromises)
+
+
+    } else {
+
+      let text = await generateText(userId, prompt, modelId, 0.7, 2048)
+
+      //if remove starting ```json and end ``` if it contains
+      text = sanitizeJSONString(text)
+      // Parse the response
+      postsData = JSON.parse(text)
     }
 
-    const text = await generateText(userId, prompt, modelId, 0.7,2048*4)
-    // Parse the response
-    const postsData = JSON.parse(text)
 
     // Generate engagement scores for each post
     const scorePrompt = `
-      For each LinkedIn post, predict engagement metrics on a scale of 0.0 to 1.0:
-      
-      Posts:
-      ${postsData.map((post: any, index: number) => `Post ${index + 1}: ${post.content}`).join("\n\n")}
-      
-      For each post, provide these scores:
-      1. engagement_score: Likelihood of getting likes, comments, and shares
-      2. attractiveness_score: Visual appeal and readability
-      3. interest_score: How interesting the content is
-      4. relevance_score: Relevance to professional audience
-      5. shareability_score: Likelihood of being shared
-      6. professional_score: Level of professionalism
-      
-      Format the response as a JSON array with objects containing all score fields.
-      like this:
-      Just return the JSON array no other text:
-      [
-        {
-          "engagement_score": 0.8,
-          "attractiveness_score": 0.7,
-          "interest_score": 0.9,
-          "relevance_score": 0.85,
-          "shareability_score": 0.75,
-          "professional_score": 0.9
-        },
-        {
-          "engagement_score": 0.6,
-          "attractiveness_score": 0.5,
-          "interest_score": 0.7,
-          "relevance_score": 0.65,
-          "shareability_score": 0.55,
-          "professional_score": 0.6
-        }
-      ]
-    `
+You are a critical evaluator trained to assess the potential impact of LinkedIn posts. Predict performance using historical patterns, inferred audience behavior, and best practices for professional content.
 
-    const scoresText = await generateText(userId, scorePrompt, modelId, 0.3)
+Analyze each post with a critical lens, identifying both strengths and weaknesses behind every score. Think as if you are training an AI to learn what works and what doesn’t — so be sharp and discerning.
 
+Posts:
+${postsData.map((post: any, index: number) => `Post ${index + 1}: ${post.content}`).join("\n\n")}
+
+For each post, return the following scores between 0.0 and 1.0:
+1. engagement_score: Predicted interaction potential (likes, comments, shares).
+2. attractiveness_score: Visual clarity, layout, formatting, and scannability.
+3. interest_score: Ability to spark curiosity or intrigue among professionals.
+4. relevance_score: Alignment with professional interests, trends, or career growth.
+5. shareability_score: Likelihood the post will be organically reshared by others.
+6. professional_score: Adherence to LinkedIn’s professional tone, language, and standards.
+
+Critical Evaluation Rules:
+
+Posts with vague messaging, dense text blocks, or excessive jargon should score lower.
+Posts with clarity, conciseness, and relevance to innovation, career growth, or industry insight should score higher.
+Repetitive or redundant information should be penalized.
+Posts that include unnecessary or filler content reduce both attractiveness and engagement.
+Use of relational language (e.g., collaboration, shared learning, appreciation) increases professional tone and overall credibility.
+Avoid overwhelming the reader with too much information—brevity supports clarity and impact.
+Learn from patterns: posts with vague messaging, dense blocks of text, or excessive jargon should score lower. Posts with clarity, specificity, and relevance to career, innovation, or growth should score higher.
+
+
+
+Respond only with a JSON array of objects like this:
+[
+  {
+    "engagement_score": 0.73,
+    "attractiveness_score": 0.66,
+    "interest_score": 0.81,
+    "relevance_score": 0.77,
+    "shareability_score": 0.72,
+    "professional_score": 0.88
+  }
+]
+Return only the JSON array. Do not explain or describe anything else.
+`
+
+    let scoresText = await generateText(userId, scorePrompt, modelId, 0.3)
+    
+    scoresText = sanitizeJSONString(scoresText)
     // Parse the scores
     const scoresData = JSON.parse(scoresText)
 
@@ -806,7 +939,7 @@ export async function generatePosts(
       const relevance_score = typeof scores.relevance_score === "number" ? scores.relevance_score : 0.5
       const shareability_score = typeof scores.shareability_score === "number" ? scores.shareability_score : 0.5
       const professional_score = typeof scores.professional_score === "number" ? scores.professional_score : 0.5
-
+      const title = post.title || `Your relinkeder Post`
       const result = await db.query(
         `INSERT INTO posts (
           user_id, 
@@ -821,9 +954,10 @@ export async function generatePosts(
           reasoning,
           model_used,
           image_suggestion,
-          schema_used
+          schema_used,
+          title
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING *`,
         [
           userId,
@@ -839,6 +973,7 @@ export async function generatePosts(
           modelId,
           post.image_suggestion || null,
           schema,
+          title,
         ],
       )
       savedPosts.push(result[0])

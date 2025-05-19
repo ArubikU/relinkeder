@@ -29,8 +29,8 @@ export default function Header() {
                 </Link>
               </li>
               <li>
-                <Link href="/profile" className="text-gray-600 hover:text-primary">
-                  Profile
+                <Link href="/settings" className="text-gray-600 hover:text-primary">
+                  Settings
                 </Link>
               </li>
             </ul>
@@ -71,20 +71,23 @@ export default function Header() {
                   </li>
                   <li>
                     <Link
-                      href="/profile"
+                      href="/settings"
                       className="text-gray-600 hover:text-primary"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      Profile
+                      Settings
                     </Link>
                   </li>
                   <li>
             <SignedOut>
-              <SignInButton />
+              <li>
+              <SignInButton /></li>
+              <li>
               <SignUpButton />
+              </li>
             </SignedOut>
             <SignedIn>
-              <UserButton />
+              <UserButton showName/>
             </SignedIn>
                   </li>
                 </ul>

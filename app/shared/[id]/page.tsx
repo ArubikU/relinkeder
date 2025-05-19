@@ -1,4 +1,5 @@
 "use client"
+import MobilePostCard from "@/components/mobile-post-card"
 import PostCard from "@/components/post-card"
 import { useEffect, useState } from "react"
 //shared/[id].tsx
@@ -45,11 +46,19 @@ useEffect(() => {
       </div>
     )
   }
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches
 
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PostCard post={post} sharedUrl={window.location.href} />
+      
+        {
+          isMobile ? (
+            <MobilePostCard key={post.id} post={post} sharedUrl={window.location.href} />
+          ) : (
+            <PostCard key={post.id} post={post} sharedUrl={window.location.href} />
+          )
+        }
         </div>
   )
 }

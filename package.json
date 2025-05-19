@@ -1,5 +1,5 @@
 {
-  "name": "my-v0-project",
+  "name": "relinkeder",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/elements": "^0.23.27",
     "@clerk/nextjs": "^6.19.2",
     "@clerk/themes": "^2.2.43",
     "@hookform/resolvers": "^3.9.1",
@@ -44,17 +45,21 @@
     "autoprefixer": "^10.4.20",
     "bcryptjs": "latest",
     "canvas": "latest",
+    "cheerio": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
     "crypto": "latest",
     "date-fns": "4.1.0",
+    "duck-duck-scrape": "^2.2.7",
     "embla-carousel-react": "8.5.1",
+    "framer-motion": "^12.12.1",
     "input-otp": "1.4.1",
-    "jsdom": "latest",
+    "jsdom": "^26.1.0",
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
     "next-themes": "latest",
+    "node-readability": "^3.0.0",
     "react": "^19",
     "react-day-picker": "8.10.1",
     "react-dom": "^19",

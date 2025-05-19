@@ -79,7 +79,7 @@ export default function ProfilePage() {
         lang = "en"
       }
 
-      const result = await saveUserProfile( career, interests, ideals, lang)
+      const result = await saveUserProfile(career, interests, ideals, lang)
 
       if (result.success) {
         setProfileSuccess(true)
@@ -124,21 +124,21 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="container mx-auto flex flex-col items-center justify-center px-4 py-24 min-h-[60vh]">
-      <div className="flex items-center gap-3 mb-4">
-        <svg className="animate-spin h-6 w-6 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-        </svg>
-        <span className="text-lg font-semibold text-primary">Loading your profile...</span>
-      </div>
-      <p className="text-gray-500">Please wait while we fetch your information.</p>
+        <div className="flex items-center gap-3 mb-4">
+          <svg className="animate-spin h-6 w-6 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+          <span className="text-lg font-semibold text-primary">Loading your settings...</span>
+        </div>
+        <p className="text-gray-500">Please wait while we fetch your information.</p>
       </div>
     )
   }
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-[#191919]">Your Profile</h1>
+      <h1 className="mb-6 text-2xl font-bold text-[#191919]">Your Settings</h1>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="relinkeder-card">
@@ -150,7 +150,7 @@ export default function ProfilePage() {
             {profileSuccess && (
               <Alert className="mb-4 bg-green-50">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-600">Profile saved successfully!</AlertDescription>
+                <AlertDescription className="text-green-600">Personal information saved successfully!</AlertDescription>
               </Alert>
             )}
 
@@ -210,39 +210,39 @@ export default function ProfilePage() {
                   defaultValue={user?.ideals || ""}
                 />
               </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lang">Preferred Language</Label>
-                  
-                    <Select
-                    value={user?.lang || ""}
-                    onValueChange={(value) => {
-                      // Update the input value for form submission
-                      const input = document.getElementById("lang-hidden-input") as HTMLInputElement
-                      if (input) input.value = value
-                      setUser((prev) => prev ? { ...prev, lang: value } : prev)
-                    }}
-                    >
-                    <SelectTrigger id="lang" className="relinkeder-input">
-                      <SelectValue placeholder={user?.lang || "Select a language"} />
-                    </SelectTrigger>
-                    <SelectContent className="relinkeder-card">
-                      {langs.map((lang) => (
+              <div className="space-y-2">
+                <Label htmlFor="lang">Preferred Language</Label>
+
+                <Select
+                  value={user?.lang || ""}
+                  onValueChange={(value) => {
+                    // Update the input value for form submission
+                    const input = document.getElementById("lang-hidden-input") as HTMLInputElement
+                    if (input) input.value = value
+                    setUser((prev) => prev ? { ...prev, lang: value } : prev)
+                  }}
+                >
+                  <SelectTrigger id="lang" className="relinkeder-input">
+                    <SelectValue placeholder={user?.lang || "Select a language"} />
+                  </SelectTrigger>
+                  <SelectContent className="relinkeder-card">
+                    {langs.map((lang) => (
                       <SelectItem key={lang.code} value={lang.code}>
                         {lang.name}
                       </SelectItem>
-                      ))}
-                    </SelectContent>
-                    </Select>
-                    {/* Hidden input to ensure form submission */}
-                    <input
-                    type="hidden"
-                    id="lang-hidden-input"
-                    name="lang"
-                    defaultValue={user?.lang || ""}
-                    required
-                    />
-                  <p className="text-xs text-gray-500">This will be used for content generation</p>
-                </div>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {/* Hidden input to ensure form submission */}
+                <input
+                  type="hidden"
+                  id="lang-hidden-input"
+                  name="lang"
+                  defaultValue={user?.lang || ""}
+                  required
+                />
+                <p className="text-xs text-gray-500">This will be used for content generation</p>
+              </div>
 
               <Button type="submit" className="w-full rounded-full" disabled={isProfileLoading}>
                 {isProfileLoading ? "Saving..." : "Save Profile"}
@@ -274,12 +274,12 @@ export default function ProfilePage() {
 
               <form onSubmit={handleApiKeysSubmit} className="space-y-4">
                 <Tabs defaultValue="cohere" className="w-full">
-                  <TabsList className="mb-4 grid w-full grid-cols-5">
-                  <TabsTrigger value="cohere">Cohere</TabsTrigger>
-                  <TabsTrigger value="openai">OpenAI</TabsTrigger>
-                  <TabsTrigger value="mistral">Mistral</TabsTrigger>
-                  <TabsTrigger value="deepseek">DeepSeek</TabsTrigger>
-                  <TabsTrigger value="gemini">Gemini</TabsTrigger>
+                  <TabsList className="mb-4 flex w-full flex-wrap sm:flex-nowrap sm:overflow-x-auto sm:gap-2">
+                    <TabsTrigger value="cohere" className="flex-1 min-w-[100px]">Cohere</TabsTrigger>
+                    <TabsTrigger value="openai" className="flex-1 min-w-[100px]">OpenAI</TabsTrigger>
+                    <TabsTrigger value="mistral" className="flex-1 min-w-[100px]">Mistral</TabsTrigger>
+                    <TabsTrigger value="deepseek" className="flex-1 min-w-[100px]">DeepSeek</TabsTrigger>
+                    <TabsTrigger value="gemini" className="flex-1 min-w-[100px]">Gemini</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="cohere" className="space-y-4">
