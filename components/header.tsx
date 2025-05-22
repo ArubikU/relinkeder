@@ -2,11 +2,12 @@
 
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
+import { SignInButton, SignUpButton, SignedIn, SignedOut } from "@clerk/nextjs"
 import { Menu } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import CustomUserButton from "./custom-user-button"
 import Logo from "./logo"
 
 export default function Header() {
@@ -38,11 +39,19 @@ export default function Header() {
         </div>
         <div className="hidden items-center gap-4 md:flex">
             <SignedOut>
-              <SignInButton />
-              <SignUpButton />
+              <>
+                <SignInButton mode="redirect">
+                  <button className="text-gray-700 hover:text-[#FF7A00] px-3 py-2 rounded-md text-sm font-medium">
+                    Iniciar Sesión
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="redirect">
+                  <button className="btn-primary">Registrarse</button>
+                </SignUpButton>
+              </>
             </SignedOut>
             <SignedIn>
-              <UserButton showName/>
+              <CustomUserButton showName/>
             </SignedIn>
         </div>
         <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
@@ -80,14 +89,25 @@ export default function Header() {
                   </li>
                   <li>
             <SignedOut>
-              <li>
-              <SignInButton /></li>
-              <li>
-              <SignUpButton />
-              </li>
+                    <div className="space-y-2">
+                      <SignInButton mode="redirect">
+                        <button
+                          onClick={()=>setIsMenuOpen(false)}
+                          className="w-full text-left text-gray-700 hover:text-[#FF7A00] px-3 py-2 rounded-md text-sm font-medium"
+                        >
+                          Iniciar Sesión
+                        </button>
+                      </SignInButton>
+                      <SignUpButton mode="redirect">
+                        <button 
+                          onClick={()=>setIsMenuOpen(false)} className="w-full btn-primary">
+                          Registrarse
+                        </button>
+                      </SignUpButton>
+                    </div>
             </SignedOut>
             <SignedIn>
-              <UserButton showName/>
+              <CustomUserButton showName/>
             </SignedIn>
                   </li>
                 </ul>

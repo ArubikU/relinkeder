@@ -623,7 +623,7 @@ export async function generatePosts(
   useChainOfThought = false,
   schema: PostSchema = "default",
   extraInstructions = "",
-  links: string[],
+  links: string[] = [],
   amount: number = 5,
 ): Promise<any[]> {
   try {

@@ -1,5 +1,5 @@
 import { getUserData } from "@/lib/actions"
-import { auth } from "@clerk/nextjs/server"
+import { auth, currentUser } from "@clerk/nextjs/server"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
@@ -10,9 +10,9 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, message: "No autenticado" }, { status: 401 })
     }
-
+    const duser = await currentUser()
     // Obtener datos del usuario usando la función del servidor
-    const userData = await getUserData(userId)
+    const userData = await getUserData(userId,duser!);
 
     if (!userData) {
       return NextResponse.json({ success: false, message: "Usuario no encontrado" }, { status: 404 })

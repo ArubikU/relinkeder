@@ -55,18 +55,6 @@ function DashboardPage() {
 
 
   useEffect(() => {
-    //check if ?signUp=true is in the URL
-    const urlParams = new URLSearchParams(window.location.search)
-    if (urlParams.has("signUp")) {
-      const signUp = urlParams.get("signUp")
-      if (signUp === "true") {
-        fetch("/api/auth/register")
-      }
-    }
-
-  },[])
-
-  useEffect(() => {
     async function fetchUserData() {
       if (!isLoaded || !clerkUser) return;
       

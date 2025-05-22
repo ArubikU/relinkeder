@@ -1,28 +1,50 @@
 "use server"
 
 import {
-    AI_MODELS,
-    generatePosts as aiGeneratePosts,
-    generateTopics as aiGenerateTopics,
-    POST_SCHEMAS,
-    type AIProvider,
-    type PostSchema,
+  AI_MODELS,
+  generatePosts as aiGeneratePosts,
+  generateTopics as aiGenerateTopics,
+  POST_SCHEMAS,
+  type AIProvider,
+  type PostSchema,
 } from "@/lib/ai"
 import { db } from "@/lib/db"
+import { User } from "@clerk/nextjs/server"
 import { revalidatePath } from "next/cache"
 
 // All functions now receive userId as an argument
 
-export async function getUserData(userId: string) {
-  if (!userId) return null
+export async function getUserData(userId: string, user?: User) {
 
   try {
     const result = await db.query(
       "SELECT * FROM users WHERE id = $1",
       [userId]
     )
-    const user = result.length > 0 ? result[0] : null
-    return user
+    let rUser = result.length > 0 ? result[0] : null
+
+    if (!rUser) {
+      const first_name = user?.fullName || user?.firstName || user?.lastName || user?.emailAddresses[0].emailAddress.split("@")[0] || ""
+      const primaryEmail = user?.emailAddresses[0].emailAddress || ""
+      const id = user?.id || ""
+      try {
+        // Create user in the database
+        await db.query(
+          "INSERT INTO users (id, email, name) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
+          [id, primaryEmail, first_name]
+        )
+        // Fetch the user again to get the complete data
+        const newUser = await db.query(
+          "SELECT * FROM users WHERE id = $1",
+          [id]
+        )
+        rUser = newUser.length > 0 ? newUser[0] : null
+      } catch (error) {
+        console.error("Error creating user in DB:", error)
+        return null
+      }
+    }
+    return rUser;
   } catch (error) {
     console.error("Error fetching user data:", error)
     return null
@@ -32,7 +54,7 @@ export async function getUserData(userId: string) {
 export async function saveUserProfile(userId: string, formData: { career: string, interests: string, ideals: string, lang: string }) {
   if (!userId) return { success: false, message: "Not authenticated" }
 
-  const {  career, interests, ideals, lang } = formData
+  const { career, interests, ideals, lang } = formData
 
   try {
     await db.query(

@@ -7,14 +7,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 const logoComponent = (<></>)
-const OlogoComponent = (            <motion.div
-              className="h-16 w-16 bg-orange-600 rounded-full mx-auto mb-6 flex items-center justify-center shadow-md shadow-orange-500/40"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <span className="text-2xl font-extrabold text-white">R</span>
-            </motion.div>)
+const OlogoComponent = (<motion.div
+  className="h-16 w-16 bg-orange-600 rounded-full mx-auto mb-6 flex items-center justify-center shadow-md shadow-orange-500/40"
+  initial={{ scale: 0.8, opacity: 0 }}
+  animate={{ scale: 1, opacity: 1 }}
+  transition={{ duration: 0.5 }}
+>
+  <span className="text-2xl font-extrabold text-white">R</span>
+</motion.div>)
 export default function SignInPage() {
   const [step, setStep] = useState("identifier");
   const [mounted, setMounted] = useState(false);
@@ -96,50 +96,48 @@ export default function SignInPage() {
           </div>
 
           <AnimatePresence mode="wait">
-            {step === "identifier" && (
-              <motion.div
-                key="identifier"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.4 }}
+            <motion.div
+              key="identifier"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Clerk.Field name="identifier" className="space-y-2">
+                <Clerk.Label className="text-sm font-medium text-gray-700">Email address or username</Clerk.Label>
+                <Clerk.Input
+                  type="text"
+                  required
+                  className="w-full rounded-xl bg-gray-50 px-4 py-3 text-sm outline-none ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-orange-500"
+                />
+                <Clerk.FieldError className="block text-sm text-red-500" />
+              </Clerk.Field>
+              <Clerk.Field name="password" className="space-y-2">
+                <Clerk.Label className="text-sm font-medium text-gray-700">Password</Clerk.Label>
+                <Clerk.Input
+                  type="password"
+                  required
+                  className="w-full rounded-full bg-gray-50 px-4 py-3 text-sm outline-none ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-orange-500"
+                />
+                <Clerk.FieldError className="block text-sm text-red-500" />
+              </Clerk.Field>
+              <SignIn.Action
+                submit
+                className="w-full rounded-xl bg-orange-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400 mt-4 flex items-center justify-center gap-2"
               >
-                <Clerk.Field name="identifier" className="space-y-2">
-                  <Clerk.Label className="text-sm font-medium text-gray-700">Email address or username</Clerk.Label>
-                  <Clerk.Input
-                    type="text"
-                    required
-                    className="w-full rounded-xl bg-gray-50 px-4 py-3 text-sm outline-none ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-orange-500"
-                  />
-                  <Clerk.FieldError className="block text-sm text-red-500" />
-                </Clerk.Field>
-                <button
-                  onClick={() => setStep("password")}
-                  className="w-full rounded-xl bg-orange-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400 mt-4"
+                Continue
+                <svg
+                  className="w-5 h-5 ml-1"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
-                  Continue
-                </button>
-              </motion.div>
-            )}
-            {step === "password" && (
-              <motion.div
-                key="password"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.4 }}
-              >
-                <Clerk.Field name="password" className="space-y-2">
-                  <Clerk.Label className="text-sm font-medium text-gray-700">Password</Clerk.Label>
-                  <Clerk.Input
-                    type="password"
-                    required
-                    className="w-full rounded-full bg-gray-50 px-4 py-3 text-sm outline-none ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-orange-500"
-                  />
-                  <Clerk.FieldError className="block text-sm text-red-500" />
-                </Clerk.Field>
-              </motion.div>
-            )}
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg></SignIn.Action>
+            </motion.div>
+
           </AnimatePresence>
           <footer className="">
 
